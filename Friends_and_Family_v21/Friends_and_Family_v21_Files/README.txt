@@ -33,4 +33,4 @@ Occassionally, different versions of Excel save CSV files with delimiters that a
 For additional error reporting or if you have solved a known or new error and would like to share it, please contact Deon de Jager at dejager4@gmail.com.
 
 Citation:
-Deon de Jager, Petrus Swarts, Cindy Harper, Paulette Bloomer. 2017. Submitted. Molecualr Ecology Resources.
+de Jager D, Swarts P, Harper C, Bloomer P (2017) Friends and Family: A software program for identification of unrelated individuals from molecular marker data. Molecular Ecology Resources, n/a-n/a.
