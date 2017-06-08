@@ -1,5 +1,7 @@
 Friends and Family version 21 README
 
+License: Use of Friends and Family is permitted as per the GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007.
+
 Starting Friends and Family:
 It may be possible that the program has a file extension of .programme. In this case, the user should manually change the file extension to .exe to make the file executable. It may happen that the anti-virus software installed on the computer scans the executable file for malware before it allows the program to open. It should not find any malware and should allow Friends and Family to run thereafter.
 
