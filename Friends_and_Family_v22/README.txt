@@ -1,4 +1,5 @@
 Friends and Family version 22 README
+Friends and Family version 22 is provided under the same license as version 21.
 This README contains update information for version 22, followed by the text from the README of version 21
 
 Update log for version 22:
