@@ -1,0 +1,654 @@
+unit Buffalou8;
+//Version 22
+interface
+
+uses
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, ExtCtrls;
+
+type
+  Tfrm = class(TForm)
+    OD: TOpenDialog;
+    Sd_a: TSaveDialog;
+    Panel1: TPanel;
+    Label1: TLabel;
+    Label_finish: TLabel;
+    Labelin: TLabel;
+    Evalue: TEdit;
+    Bextract: TButton;
+    Button_in: TButton;
+    Button_frout: TButton;
+    lbr: TListBox;
+    lbo: TListBox;
+    Label7: TLabel;
+    Label3: TLabel;
+    Labelfaout: TLabel;
+    Radfiles: TRadioButton;
+    button_faout: TButton;
+    Labelfrout: TLabel;
+    Sd_r: TSaveDialog;
+    GroupBox1: TGroupBox;
+    matrix: TRadioButton;
+    single: TRadioButton;
+    convert: TButton;
+    Label2: TLabel;
+    Button1: TButton;
+    procedure BextractClick(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
+    procedure Button_froutClick(Sender: TObject);
+    procedure Button_inClick(Sender: TObject);
+    procedure button_faoutClick(Sender: TObject);
+    procedure convertClick(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
+  private
+    { Private declarations }
+b_Name:Array[0..1000000,0..1] of string;
+b_data : Array of Array of integer;
+b_no : Array of Array of real;
+
+  public
+  fn,fo_fr,fo_fa: string;
+    { Public declarations }
+  end;
+
+var
+  frm: Tfrm;
+
+implementation
+
+{$R *.dfm}
+
+function find_rb(max,turn,rb: integer): integer;
+var
+w,r,c,i: integer;
+avg: real;
+begin
+If turn>0 then frm.b_name[rb,1]:='friend';
+w:= Max;
+for r:=1 to Max do
+    if ((frm.b_data[r,0]<w)and(frm.b_name[r,1]='-')) then begin    //find new reference
+      rb:=r   ;   w:=frm.b_data[r,0];
+    end;  //if frm.b_data
+i:=0;
+for r:=1 to Max do                           //find/Mark duplicates
+    if ((frm.b_data[r,0]=w)and(frm.b_name[r,1]='-')) then begin
+      inc(i)   ;   frm.b_data[0,r]:=1;
+    end;  //if frm.b_data
+If i>1 then begin                //deal with duplicate
+  for r:=1 to Max do begin  //calculate average
+  if r mod 9000=0 then Begin
+  frm.label2.Caption:='Process '+IntToStr(r); application.ProcessMessages;  end;
+  avg:=0;   w:=0;
+    if ((frm.b_data[0,r]=1)and(frm.b_name[r,1]='-')) then
+      for c:=1 to Max do
+//        if ((frm.b_name[c,1]<>'family')and(frm.b_no[r,c]<>0)) then begin
+        if ((frm.b_name[c,1]<>'family')and(r<>c)) then begin
+          avg:=avg+frm.b_no[r,c];   inc(w);
+        end;  // if (frm.b_name
+  If w>0 then frm.b_no[r,0]:=avg/(w);
+  If ((w>0)and(avg/w=0)) then frm.b_no[r,0]:=0.00001;
+  end;  //for r=1
+  avg:=Max;     rb:=Max;
+  for r:=1 to Max do
+    if ((frm.b_no[r,0]<avg)and(frm.b_name[r,1]='-')and(frm.b_no[r,0]<>0)) then begin    //& find min
+      rb:=r   ;   avg:=frm.b_no[r,0];
+    end;   //if (frm.b_no
+end;  //if i>1 deal with duplicates      
+Result:= rb;
+End;  //function
+
+
+procedure Tfrm.convertClick(Sender: TObject);
+var
+df: textfile;
+w,t,r,c,i,nom,k,kk: integer;
+l,d,l_n,t_n,g1,n1: string;
+v: real;
+b_Dat : Array of Array of string;
+b_n : Array of string;
+begin
+//fn:='Table input format.csv';
+assignfile(df,fn);
+
+    try
+      reSet(df);
+    except
+      on Exception : EinoutError do begin
+      ShowMessage('Please close file '+fn+' and try again');
+      halt;
+      end; //  on exception
+    end;    //   try
+     nom:=0;    k:=0;  //     determine the table length
+while not eof(df) do begin                                              
+  inc(k);
+  if k mod 100000=0 then Begin
+  label2.Caption:= ' Convert 1 '+IntToStr(k); application.ProcessMessages;  end;
+  readln(df,l);
+  if length(l)<5 then break;
+  inc (nom);
+end;   //    while not
+closefile(df);
+reSet(df);  t:=0;   w:=0;   k:=0;   //     determine the matrix size
+while not eof(df) do begin
+  inc(k);
+  if k mod 100000=0 then Begin
+  label2.Caption:= ' Convert 2 '+IntToStr(k); application.ProcessMessages;  end;
+  readln(df,l);
+  inc (w);   t:=t+w;
+  if t=nom then begin w:=w+1; l:='yes';  break; end;
+end;   //    while not
+closefile(df);              //        data validation
+if w>1000000 then begin
+    showmessage ('The maximum number of members is 1000000');
+    halt;
+end;  //if w
+if l<>'yes' then begin
+    showmessage ('The number of data points ('+intToStr(nom)+') do not fit a tri-matrix');
+    halt;
+end;  //if w
+SetLength(b_n,w+1);    //   setup matrix Buffalo names
+SetLength(b_dat,w+1,w+1);    //   setup the basic matrix
+for r:=0 to w do  for c:=0 to w do b_dat[r,c]:='0';
+for r:=0 to w do b_n[r]:='-';
+reSet(df);
+readln(df,l);         g1:='no';
+b_n[1]:=copy(l,1,pos(',',l)-1);       l_n:=copy(l,1,pos(',',l)-1);
+c:=1;
+
+k:=0;  kk:=0;
+while not eof(df) do begin           //   extract buffalo names 1st column
+  inc(kk);
+  readln(df,l);
+  t_n:=copy(l,1,pos(',',l)-1);
+  for i:=1 to w do begin
+    inc(k);
+  if k mod 100000=0 then Begin
+  label2.Caption:='Convert 3 '+IntToStr(kk)+','+IntToStr(i); application.ProcessMessages;   end;
+    if((t_n=b_n[i])or(t_n=l_n)) then break else begin
+      if b_n[i]='-' then  g1:='yes';
+      if i=w then g1:='yes';
+    End;  //  if tn =bn
+  End;  //   for i =1 all
+  If g1='yes' then begin
+    inc(c);
+    b_n[c]:=t_n;  l_n:=t_n;   g1:='no';
+  end;  //  if g1 = yes
+end;   //    while not
+closefile(df);
+reSet(df);
+
+g1:='no'; k:=0;   kk:=0;
+while not eof(df) do begin           //   extract buffalo names 2nd column
+  inc(kk);
+  readln(df,l);
+   delete(l,1,pos(',',l));
+  t_n:=copy(l,1,pos(',',l)-1);
+  for i:=1 to w do begin
+    inc(k);
+  if k mod 100000000=0 then Begin
+  label2.Caption:='Convert 4 '+IntToStr(kk)+','+IntToStr(i); application.ProcessMessages;   end;
+    if((t_n=b_n[i])or(t_n=l_n)) then break else begin
+      if b_n[i]='-' then  g1:='yes';
+      if i=w then g1:='yes';
+    End;  //  if tn =bn
+  End;  //   for i =1 all
+//  if i=w then showmessage (intToStr(c) +' i = W '+intToStr(i));
+  If g1='yes' then begin
+    inc(c);
+    b_n[c]:=t_n;  l_n:=t_n; g1:='no';
+  end;  //  if g1 = yes
+end;   //    while not
+closefile(df);
+
+reSet(df);   k:=0;                 //     populate matrix
+for t:=1 to nom do begin
+  readln(df,l);
+  n1:=copy(l,1,pos(',',l)-1);    //row
+  g1:='no';
+  for i:=1 to w do begin
+    inc(k);
+    if k mod 100000000=0 then Begin
+    label2.Caption:='Convert 5 '+IntToStr(t)+','+IntToStr(i); application.ProcessMessages;   end;
+    if n1=b_n[i] then begin
+      r:=i;  g1:='yes';  break;
+    end;  //  if n1
+  end;  //    for i:=1
+  if g1='no' then begin
+      ShowMessage('1st Sample name error in input data : Row '+IntToStr(t));
+      halt;
+      end; //  on g1 =  no
+   delete(l,1,pos(',',l));
+  n1:=copy(l,1,pos(',',l)-1);    //column
+  g1:='no';
+  for i:=1 to w do begin
+    inc(k);
+    if k mod 100000000=0 then Begin
+    label2.Caption:='Convert 5 '+IntToStr(t)+','+IntToStr(i); application.ProcessMessages;   end;
+    if n1=b_n[i] then begin
+      c:=i;  g1:='yes';  break;
+    end;  //  if n1
+  end;  //    for i:=1
+  if g1='no' then begin
+      ShowMessage('2nd Sample name error in input data : Row '+IntToStr(t));
+      halt;
+      end; //  on g1 =  no
+  delete(l,1,pos(',',l));
+    if pos(',',l)=0 then d:=l else d:=copy(l,1,pos(',',l)-1);
+    try
+      v:=strtofloat(d);
+    except
+      on Exception : EConvertError do begin
+      ShowMessage('Invalid input data : Row '+IntToStr(i));
+      halt;
+      end; //  on exception
+    end;    //   try
+      b_dat[r,c]:=d;
+      b_dat[c,r]:=d;
+End;  //  for i =1
+closefile(df);
+  for i:=1 to w do begin               // insert the Buffalo names
+    b_dat[0,i]:=b_n[i] ;
+    b_dat[i,0]:=b_n[i] ;
+  end;  //  for i
+
+
+{reSet(df);
+for i:=1 to nom-w+1 do  readln(df,l);
+for i:=1 to w-1 do begin
+  readln(df,l);
+  b_dat[i,0]:=copy(l,1,pos(',',l)-1);
+  b_dat[0,i]:=copy(l,1,pos(',',l)-1);
+  if i=w-1 then begin
+    delete(l,1,pos(',',l));
+    b_dat[w,0]:=copy(l,1,pos(',',l)-1);
+    b_dat[0,w]:=copy(l,1,pos(',',l)-1);
+  end;    //   i=w-1
+end;    //    i=1
+closefile(df);
+reSet(df);      i:=0;                //     populate matrix
+  for r:=2 to w do
+    for c:=1 to r-1 do begin
+      readln(df,l);       inc(i);
+      delete(l,1,pos(',',l));
+      delete(l,1,pos(',',l));
+    if pos(',',l)=0 then d:=l else d:=copy(l,1,pos(',',l)-1);
+    try
+      v:=strtofloat(d);
+    except
+      on Exception : EConvertError do begin
+      ShowMessage('Invalid input data : Row '+IntToStr(i));
+      halt;
+      end; //  on exception
+    end;    //   try
+      b_dat[r,c]:=d;
+      b_dat[c,r]:=d;
+    end;   //     for c=1
+closefile(df);         }
+assignfile(df,'wa3b2.csv');
+reWrite (df);
+for r:=0 to w do begin
+  l:='';
+  for c:=0 to w do
+    if c=w then L:=l+b_dat[r,c] else L:=l+b_dat[r,c]+',';
+  Writeln (df,l);
+End;  //     for r=0
+closefile(df);
+end;  //      procedure convert
+
+
+procedure Tfrm.BextractClick(Sender: TObject);
+var
+df,nf, fam: textfile;
+w,r,c,i,Max,rb,family,friends,turn,k: integer;
+l,n1,f,heading: string;
+v,tv: real;
+r_b: array of integer;
+begin
+f:=Evalue.Text;
+Decimalseparator:='.';
+    try
+      tv:=strtofloat(f);
+    except
+      on Exception : EConvertError do begin
+      ShowMessage('Invalid relatedness cut off value'+#13+Exception.Message);
+      f:='fault';
+      end; //  on exception
+    end;    //   try
+
+if ((fn='')or(fo_fr='')or(fo_fa='')) then
+  Showmessage ('Input and output files must be specified') ;
+if ((fn='')or(fo_fr='')or(fo_fa='')or(f='fault')) then else begin //valid input
+bextract.caption:='Processing';
+application.ProcessMessages;
+lbo.Items.Clear;     lbr.Items.Clear;
+
+If single.Checked then begin      //    convert table to tri matrix
+  convert.Click;
+  fn:='wa3b2.csv';
+End;  //     if single
+
+for r:=1 to 1000000 do for c:=0 to 1 do b_name[r,c]:='-';
+assignfile(df,fn);
+    try
+      reSet(df);
+    except
+      on Exception : EinoutError do begin
+      ShowMessage('Please close file '+fn+' and try again');
+      halt;
+      end; //  on exception
+    end;    //   try
+w:=0;      //       extract the Buffalo names
+readln(df,heading);    //headings
+If pos(',',l)=1 then delete(heading,1,1) else delete(heading,1,pos(',',heading));
+k:=0;
+while not eof(df) do begin
+  Inc(k);
+  if k mod 100000=0 then Begin
+  label2.Caption:='Processpicture 1 '+IntToStr(k); application.ProcessMessages; end;
+  readln(df,l);
+  inc (w);
+  if w=1000001 then begin
+    showmessage ('The maximum number of members is 1000000');
+    halt;
+    end;  //if w
+  b_name[w,0]:=copy(l,1,pos(',',l)-1);
+  if b_name[w,0]='' then begin w:=w-1; break; end;
+end;   //    while not
+closefile(df);
+//showmessage (' besettling '+intToStr(w));
+Max:=w;
+SetLength(frm.b_data,w+1,w+1);
+SetLength(frm.b_no,w+1,w+1);
+SetLength(r_b,w+1);
+for r:=0 to w do  for c:=0 to w do b_data[r,c]:=0;
+for r:=0 to w do  for c:=0 to w do b_no[r,c]:=0;
+
+k:=0;
+for w := 1 to Max do begin       //SETUP BINARY AND NUMBERS MATRIX
+  Reset(df);
+  For i:=1 to w+1 do readln(df,l);   //headings and space
+  delete(l,1,pos(',',l));    //Buffalo name
+  For c:=1 to w do begin
+    Inc(k);
+    if k mod 10000=0 then Begin
+    label2.Caption:='Process '+IntToStr(w)+' of '+IntToStr(Max); application.ProcessMessages;   end;
+    if pos(',',l)=0 then f:=l else f:=copy(l,1,pos(',',l)-1);
+    try
+      v:=strtofloat(f);
+    except
+      on Exception : EConvertError do begin
+      ShowMessage('Invalid input data : Row '+IntToStr(w+1)+
+        ' column '+IntToStr(r+1)+#13+Exception.Message);
+      halt;
+      end; //  on exception
+    end;    //   try
+
+    b_no[w,c]:=v;
+    delete(l,1,pos(',',l));
+    If v>=tv then b_data[w,c]:=1 else b_data[w,0]:=b_data[w,0]+1;  //family =1
+  End;    //for c=1
+If w<max then begin
+  For r:=w+1 to Max do begin
+    Inc(k);
+    if k mod 10000=0 then Begin
+    label2.Caption:='Process '+IntToStr(w)+' of '+IntToStr(Max); application.ProcessMessages;   end;
+    readln(df,l);
+    for i:=1 to w do delete(l,1,pos(',',l));
+    f:=copy(l,1,pos(',',l)-1);
+    try
+      v:=strtofloat(f);
+    except
+      on Exception : EConvertError do begin
+      ShowMessage('Invalid input data : Row '+IntToStr(r+1)+
+        ' column '+IntToStr(w+1)+#13 +Exception.Message);
+      halt;
+      end; //  on exception
+    end;    //   try
+
+    b_no[w,r]:=v;
+    If v>=tv then b_data[w,r]:=1 else b_data[w,0]:=b_data[w,0]+1;
+  End;    //for r=w+1
+end;  //if w<max
+  closefile(df);
+end;    //binary numbers
+
+//showmessage (' before switching');
+for r:=1 to Max do b_data[r,0]:=Max-b_data[r,0];   //switch the values
+
+if radfiles.Checked Then begin
+n1:= fo_fr;      delete(n1,length(fo_fr)-3,4);
+assignfile(nf,n1+' raw.csv');          //raw numbers
+    try
+      rewrite(nf);
+    except
+      on Exception : EinoutError do begin
+      ShowMessage('Please close file '+n1+' raw.csv and try again');
+      halt;
+      end; //  on exception
+    end;    //   try
+writeln(nf,' ,'+heading);
+for r:=1 to Max do  begin
+  if r mod 9000=0 then Begin
+  label2.Caption:='Process rbin '+IntToStr(r); application.ProcessMessages;       end;
+  write(nf,b_name [r,0]+',');
+  for c := 1 to Max do write(nf,floatToStr(b_no[r,c])+',');
+  writeln(nf,'');
+end;
+closefile(nf);
+assignfile(nf,n1+' bin 0.csv');          //raw output binary 0
+    try
+      rewrite(nf);
+    except
+      on Exception : EinoutError do begin
+      ShowMessage('Please close file '+n1+' bin 0.csv and try again');
+      halt;
+      end; //  on exception
+    end;    //   try
+writeln(nf,'name,count,'+heading);
+for r:=1 to Max do  begin
+  if r mod 9000=0 then Begin
+  label2.Caption:='Process bin '+IntToStr(r); application.ProcessMessages;   end;
+  write(nf,b_name [r,0]+',');
+  for c := 0 to Max do write(nf,IntToStr(b_data[r,c])+',');
+  writeln(nf,'');
+end;
+closefile(nf);
+ end; //if rad  checked
+
+turn:=0;
+rb:= find_rb(max,turn,rb);
+lbr.Items.add ('First sample '+b_name[rb,0] +'  –  Number of family members = '+IntToStr(b_data[rb,0]));
+assignfile(fam,fo_fa);          //eliminated members
+    try
+      rewrite(fam);
+    except
+      on Exception : EinoutError do begin
+      ShowMessage('Please close file '+fo_fa+' and try again');
+      halt;
+      end; //  on exception
+    end;    //   try
+//showmessage (' before crunching');
+ k:=0;                                      //DO DATA CRUNCHING
+Repeat
+inc (turn);
+writeln(fam,'Round '+IntToStr(turn)+'  –  Family of '+b_name[rb,0]);
+//for turn:=1 to 3 do begin
+for c:=0 to Max do r_b[c]:=b_data[rb,c];//reference buffalo
+for w:= 1 to Max do begin          //remove reference        
+    Inc(k);
+    if k mod 50000=0 then Begin
+    label2.Caption:='Process '+IntToStr(friends+family)+' of '+IntToStr(Max);
+    application.ProcessMessages;   end;
+  b_data[w,0]:=0;            //reset count
+  b_no[w,0]:=0;            //reset average
+  b_data[0,w]:=0;      //reset average count
+  If ((r_b[w]=1)and(b_name[w,1]<>'friend')) then begin
+    b_name[w,1]:='family';
+    writeln(fam,b_name[w,0]+','+ floattostr(b_no[rb,w]));
+    for r:=0 to Max do b_data[r,w]:=0;
+  end;  //for if r_b[w]=1
+end;  //for w
+for r:=1 to Max do  for c:=1 to Max do
+    b_data[r,0]:=b_data[r,0]+b_data[r,c]; //recalculate reference
+          
+writeln(fam,' ');
+rb:= find_rb(max,turn,rb);
+lbr.Items.add ('Next sample '+b_name[rb,0]+'  –  Number of family members = '+IntToStr(b_data[rb,0]));
+
+if radfiles.Checked Then begin
+assignfile(nf,n1+' bin '+IntToStr(turn)+'.csv');          //raw output binary
+    try
+      rewrite(nf);
+    except
+      on Exception : EinoutError do begin
+      ShowMessage('Please close file '+n1+' bin '+intToStr(turn)+'.csv and try again');
+      halt;
+      end; //  on exception
+    end;    //   try
+
+writeln(nf,'name,status,avg,count,'+  heading);
+for r:=1 to Max do  begin
+if (b_name [r,1]<>'family') then begin
+  write(nf,b_name[r,0]+','+b_name[r,1]+','+floattostr(b_no[r,0])+',');
+  for c := 0 to Max do write(nf,IntToStr(b_data[r,c])+',');
+  writeln(nf,'');
+End;//if not a family
+end; //for
+closefile(nf);
+end;  //if rad checked
+
+family:=0;   friends:=0;
+for r:=1 to Max do begin
+    if b_name[r,1]='family' then inc(family);
+    if b_name[r,1]='friend' then inc(friends);
+end;  //if r
+//end;   //for turn
+if turn=Max then friends:=Max;
+if turn=Max then family:=0;
+Until (friends+family=Max);
+
+closefile(fam);
+
+assignfile(nf,fo_fr);
+    try
+      rewrite(nf);
+    except
+      on Exception : EinoutError do begin
+      ShowMessage('Please close file '+fo_fr+' and try again');
+      halt;
+      end; //  on exception
+    end;    //   try
+
+lbo.Items.Clear;
+for w:=1 to lbr.Items.Count-1 do  writeln(nf,lbr.Items[w]);
+writeln(nf,' ');
+writeln(nf,'Unrelated samples');
+lbo.Items.add ('Unrelated samples');
+for r:=1 to Max do
+   if b_name[r,1]='friend' then writeln(nf,b_name[r,0]+','+b_name[r,1]);
+for r:=1 to Max do
+    if b_name[r,1]='friend' then lbo.Items.add (b_name[r,0]+'    '+b_name[r,1]);
+closefile(nf);
+
+label2.Caption:='Complete';
+Label_finish.caption:=' Finished at '+ timetostr (now);
+bextract.caption:='Extract data';
+label_finish.left:= round (500-label_finish.Width/2);
+end;//if fn='')or(fo= valid input
+
+end;   //but extract click
+
+
+procedure Tfrm.FormActivate(Sender: TObject);
+begin
+panel1.top:=0;//(frm.Clientheight-716) div 2;
+panel1.left:=(frm.Clientwidth-1000) div 2;
+panel1.height:=frm.Clientheight-1;
+lbr.Height:=frm.Clientheight-275;
+lbo.Height:=frm.Clientheight-275;
+label_finish.Caption:='';
+with sd_a do begin
+  DefaultExt := 'csv';
+  FilterIndex := 1;
+  Filter := 'Comma separated files only|*.csv';
+  Filename := 'family';
+  title := 'Who is your daddy?' ;
+end;   //  sd_a
+with sd_r do begin
+  DefaultExt := 'csv';
+  FilterIndex := 1;
+  Filter := 'Comma separated files only|*.csv';
+  Filename := 'friends';
+  title := 'Friends output file' ;
+end;  //  sd_r
+od.Filter := 'Comma separated files only|*.csv';
+od.title:=' Input file name please';
+fo_fa:='';       fo_fr:='';        fn:='';
+labelin.Width:=1000;    labelfrout.Width:= 1000;    labelfaout.Width:=1000;
+end;    //form activate
+
+
+procedure Tfrm.Button_froutClick(Sender: TObject);
+begin
+sd_r.InitialDir := GetCurrentDir;
+If sd_r.Execute then fo_fr:=sd_r.Filename else begin
+  Labelfrout.caption:='No file selected';
+  ShowMessage('Save file was cancelled');
+  end;
+//fo_fr:=editfr.Text;
+If fo_fr<>'' then Labelfrout.caption:=fo_fr;
+labelfrout.left:= round (500-labelfrout.Width/2);
+label_finish.Caption:='';
+end;  //  button out friend
+
+procedure Tfrm.Button_inClick(Sender: TObject);
+begin
+od.InitialDir := GetCurrentDir;
+If od.Execute then fn:=od.Filename else begin
+  Labelin.caption:='No file selected';
+  ShowMessage('Open file was cancelled');
+  end;
+If fn<>'' then Labelin.caption:=fn;
+labelin.left:= round (500-labelin.Width/2);
+label_finish.Caption:='';
+end;     // button in
+
+procedure Tfrm.button_faoutClick(Sender: TObject);
+begin
+sd_a.InitialDir := GetCurrentDir;
+If sd_a.Execute then fo_fa:=sd_a.Filename else begin
+  Labelfaout.caption:='No file selected';
+  ShowMessage('Save file was cancelled');
+  end;
+//fo_fa:=editfa.Text;
+If fo_fa<>'' then Labelfaout.caption:=fo_fa;
+labelfaout.left:= round (500-labelfaout.Width/2);
+label_finish.Caption:='';
+end;  //  button out family
+
+
+procedure Tfrm.Button1Click(Sender: TObject);
+var
+f: textfile;
+n,r,c: integer;
+w:Real;
+begin
+n:= 500;
+assignfile(f,'aadatak.csv');
+Rewrite (f);
+for r:=2 to n do  Begin
+ if r  mod 100=0 then Begin
+  label2.Caption:='Process '+IntToStr(r); application.ProcessMessages; end;
+
+for c:=1 to r-1 do  Begin
+//w:=RandomRange(10000, 90000)/100000;
+w:=Random+0.1;
+if w> 0.9 then w:=w-0.1;
+writeln(f,'sample_'+inttostr(r)+',sample_'+inttostr(c)+','+floattostrf(w,ffgeneral,5,5));
+end;   //for c
+end;   //for r
+
+closefile (f);
+End;   //procedure
+
+end.
