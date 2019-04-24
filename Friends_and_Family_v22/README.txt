@@ -2,7 +2,7 @@ Friends and Family version 22 README
 This README contains update information for version 22, followed by the text from the README of version 21
 
 Update log for version 22:
-Version 22 of Friends and Family can handle larger datasets as input. Specifically, version 22 can handle an input file containing 1 000 000 (1 million) datapoints (up from 10 000 in version 21).
+Version 22 of Friends and Family can handle larger datasets as input. Specifically, version 22 can handle an input file containing 1 000 000 (1 million) data points (up from 10 000 in version 21).
 Included a progress counter, since larger datasets will take longer to process.
 
 An example input file of a larger dataset is provided. 
