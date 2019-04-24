@@ -6,7 +6,7 @@ Update log for version 22:
 Version 22 of Friends and Family can handle larger datasets as input. Specifically, version 22 can handle an input file containing 1 000 000 (1 million) data points (up from 10 000 in version 21).
 Included a progress counter, since larger datasets will take longer to process.
 
-An example input file of a larger dataset is provided. 
+An example input file of a larger dataset is provided. It is compressed in .zip format, because of the file upload size limit of Github (25 MB), so just unzip it once downloaded to get in the correct CSV format.
 This dataset (Table_input_file_Example_v22.csv) contains simulated pairwise relatedness values of 1410 samples (993 345 datapoints).
 
 #####################################
