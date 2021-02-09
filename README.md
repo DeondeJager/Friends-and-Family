@@ -9,7 +9,7 @@ This repository contains the files Friends_and_Family_v22.zip and Friends_and_Fa
 The main difference between the versions is that v22 can handle more datapoints in the input file (1,000,000 in v22 vs 10,000 in v21). See the README for v22 for more detail.
 
 ## Download
-To download Friends and Family, click on the link above and then on the "Download" button to the right of the screen.
+To download Friends and Family, click on the `Friends_and_Family_v22.zip' above and then on the "Download" button to the right of the screen.
 
 ## License
 Use of Friends and Family is permitted as per the [GNU GENERAL PUBLIC LICENSE Version 3, 29 June 2007](https://github.com/DeondeJager/Friends-and-Family/blob/master/LICENSE).
