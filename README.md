@@ -4,7 +4,7 @@ _This README is the README for this repository and not for the software program 
 Friends and Family is a Windows program with a graphical user interface (GUI) used to identify unrelated individuals from pairwise relatedness estimates. 
 
 ## Summary
-This repository contains the files Friends_and_Family_v22.zip and Friends_and_Family_v21.zip that contain the Windows executable software program Friends and Family, versions 22 and 21, with associated example input and output files and README. 
+This repository contains the files `Friends_and_Family_v22.zip` and `Friends_and_Family_v21.zip` that contain the Windows executable software program Friends and Family, versions 22 and 21, with associated example input and output files and README. The corresponding unzipped folders are also provided, if one wants to download specific individual files only.
 
 The .zip folders also contain the source code in a text file and the file README_Source_Code that goes along with it.
 
